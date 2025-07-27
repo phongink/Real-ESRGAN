@@ -201,9 +201,13 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
             'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth'
         ]
     elif args.model_name == '2xLiveActionV1_SPAN':  # x2 SPAN model
-    model = SPANNet(num_in_ch=3, num_out_ch=3, num_feat=48, num_conv=32,act_type='lrelu',scale=2)
-    netscale = 2
-    file_url = ['https://github.com/jcj83429/upscaling/raw/main/2xLiveActionV1_SPAN/2xLiveActionV1_SPAN_490000.pth']
+        model = SPANNet(num_in_ch=3, num_out_ch=3, num_feat=48, num_conv=32,act_type='lrelu',scale=2)
+        netscale = 2
+        file_url = ['https://github.com/jcj83429/upscaling/raw/main/2xLiveActionV1_SPAN/2xLiveActionV1_SPAN_490000.pth']
+    elif args.model_name == '1xDeH264_realplksr':  # model 1x restoration (realplksr_tiny)
+        model = realplksr_tiny(num_in_ch=3,num_out_ch=3,scale=1,dsample=True,type_up='esa2fpn')
+        netscale = 1
+        file_url = ['https://github.com/Phhofm/models/releases/download/1xDeH264_realplksr/1xDeH264_realplksr.pth']
 
     # ---------------------- determine model paths ---------------------- #
     model_path = os.path.join('weights', args.model_name + '.pth')
