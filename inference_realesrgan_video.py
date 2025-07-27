@@ -11,6 +11,9 @@ from basicsr.archs.rrdbnet_arch import RRDBNet
 from basicsr.utils.download_util import load_file_from_url
 from os import path as osp
 from tqdm import tqdm
+from basicsr.utils.registry import ARCH_REGISTRY
+from models.span_arch import SPANNet
+from models.realplksr_arch import realplksr_tiny
 
 from realesrgan import RealESRGANer
 from realesrgan.archs.srvgg_arch import SRVGGNetCompact
