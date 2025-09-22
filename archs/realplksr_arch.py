@@ -160,10 +160,10 @@ class realplksr(nn.Module):
         return x
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 def realplksr_s(**kwargs):
     return realplksr(n_blocks=12, kernel_size=13, use_ea=False, **kwargs)
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 def realplksr_l(**kwargs):
     return realplksr(dim=96, **kwargs)
