@@ -181,7 +181,7 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
     
     # NEW MODEL ADDED: Add an elif block for the new model
     if args.model_name == '1xDeNoise_realplksr_otf':
-        model = realplksr(scale=1)
+        model = realplksr(upscaling_factor=1)
         netscale = 1
         file_url = ['https://github.com/Phhofm/models/releases/download/1xDeNoise_realplksr_otf/1xDeNoise_realplksr_otf.pth']
     elif args.model_name == 'RealESRGAN_x4plus':  # x4 RRDBNet model
