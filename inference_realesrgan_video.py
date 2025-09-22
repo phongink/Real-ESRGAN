@@ -1,3 +1,5 @@
+# START OF FILE inference_realesrgan_video.py
+
 import argparse
 import cv2
 import glob
@@ -14,6 +16,9 @@ from tqdm import tqdm
 
 from realesrgan import RealESRGANer
 from realesrgan.archs.srvgg_arch import SRVGGNetCompact
+
+# NEW MODEL ADDED: Import the new architecture
+from archs.realplksr_arch import RealPLKSR
 
 try:
     import ffmpeg
@@ -173,7 +178,13 @@ class Writer:
 def inference_video(args, video_save_path, device=None, total_workers=1, worker_idx=0):
     # ---------------------- determine models according to model names ---------------------- #
     args.model_name = args.model_name.split('.pth')[0]
-    if args.model_name == 'RealESRGAN_x4plus':  # x4 RRDBNet model
+    
+    # NEW MODEL ADDED: Add an elif block for the new model
+    if args.model_name == '1xDeNoise_realplksr_otf':
+        model = RealPLKSR(scale=1)
+        netscale = 1
+        file_url = ['https://github.com/Phhofm/models/releases/download/1xDeNoise_realplksr_otf/1xDeNoise_realplksr_otf.pth']
+    elif args.model_name == 'RealESRGAN_x4plus':  # x4 RRDBNet model
         model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
         netscale = 4
         file_url = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth']
@@ -200,14 +211,6 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
             'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-wdn-x4v3.pth',
             'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth'
         ]
-    elif args.model_name == '2xLiveActionV1_SPAN':  # x2 SPAN model
-        model = SPANNet(num_in_ch=3, num_out_ch=3, num_feat=48, num_conv=32,act_type='lrelu',scale=2)
-        netscale = 2
-        file_url = ['https://github.com/jcj83429/upscaling/raw/main/2xLiveActionV1_SPAN/2xLiveActionV1_SPAN_490000.pth']
-    elif args.model_name == '1xDeH264_realplksr':  # model 1x restoration (realplksr_tiny)
-        model = realplksr_tiny(num_in_ch=3,num_out_ch=3,scale=1,dsample=True,type_up='esa2fpn')
-        netscale = 1
-        file_url = ['https://github.com/Phhofm/models/releases/download/1xDeH264_realplksr/1xDeH264_realplksr.pth']
 
     # ---------------------- determine model paths ---------------------- #
     model_path = os.path.join('weights', args.model_name + '.pth')
@@ -226,6 +229,16 @@ def inference_video(args, video_save_path, device=None, total_workers=1, worker_
         dni_weight = [args.denoise_strength, 1 - args.denoise_strength]
 
     # restorer
+    # For 1x model, outscale should be 1 unless specified otherwise.
+    if netscale == 1 and args.outscale != 1:
+        print(f"Warning: Model scale is 1, but outscale is set to {args.outscale}. The output will be {args.outscale}x the input size.")
+    
+    # If the user did not specify an outscale, and the model is 1x, set outscale to 1.
+    # The default outscale is 4, which is not correct for a 1x model.
+    if netscale == 1 and parser.get_default('outscale') == args.outscale:
+        args.outscale = 1
+        print(f"Model scale is 1. Automatically setting outscale to 1.")
+
     upsampler = RealESRGANer(
         scale=netscale,
         model_path=model_path,
@@ -330,20 +343,23 @@ def run(args):
         shutil.rmtree(osp.join(args.output, f'{args.video_name}_inp_tmp_videos'))
     os.remove(f'{args.output}/{args.video_name}_vidlist.txt')
 
+# Define parser globally to access it in inference_video
+parser = argparse.ArgumentParser()
 
 def main():
     """Inference demo for Real-ESRGAN.
     It mainly for restoring anime videos.
 
     """
-    parser = argparse.ArgumentParser()
+    global parser
     parser.add_argument('-i', '--input', type=str, default='inputs', help='Input video, image or folder')
     parser.add_argument(
         '-n',
         '--model_name',
         type=str,
         default='realesr-animevideov3',
-        help=('Model names: realesr-animevideov3 | RealESRGAN_x4plus_anime_6B | RealESRGAN_x4plus | RealESRNet_x4plus |'
+        # NEW MODEL ADDED: Add the new model name to the help string
+        help=('Model names: 1xDeNoise_realplksr_otf | realesr-animevideov3 | RealESRGAN_x4plus_anime_6B | RealESRGAN_x4plus | RealESRNet_x4plus |'
               ' RealESRGAN_x2plus | realesr-general-x4v3'
               'Default:realesr-animevideov3'))
     parser.add_argument('-o', '--output', type=str, default='results', help='Output folder')
@@ -354,7 +370,7 @@ def main():
         default=0.5,
         help=('Denoise strength. 0 for weak denoise (keep noise), 1 for strong denoise ability. '
               'Only used for the realesr-general-x4v3 model'))
-    parser.add_argument('-s', '--outscale', type=float, default=4, help='The final upsampling scale of the image')
+    parser.add_argument('-s', '--outscale', type=float, default=4, help='The final upsampling scale of the image. For 1x models, this should be 1.')
     parser.add_argument('--suffix', type=str, default='out', help='Suffix of the restored video')
     parser.add_argument('-t', '--tile', type=int, default=0, help='Tile size, 0 for no tile during testing')
     parser.add_argument('--tile_pad', type=int, default=10, help='Tile padding')
