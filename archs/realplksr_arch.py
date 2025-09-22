@@ -8,8 +8,6 @@ from torch.nn.init import trunc_normal_
 from .arch_util import DySample, net_opt
 # from neosr.utils.registry import ARCH_REGISTRY
 
-upscale, __ = net_opt()
-
 
 class DCCM(nn.Sequential):
     """Doubled Convolutional Channel Mixer"""
@@ -111,7 +109,7 @@ class realplksr(nn.Module):
         out_ch: int = 3,
         dim: int = 64,
         n_blocks: int = 28,
-        upscaling_factor: int = upscale,
+        upscaling_factor: int = 1,
         kernel_size: int = 17,
         split_ratio: float = 0.25,
         use_ea: bool = True,
