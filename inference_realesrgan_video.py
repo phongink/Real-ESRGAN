@@ -30,14 +30,30 @@ except ImportError:
 
 def get_video_meta_info(video_path):
     ret = {}
-    probe = ffmpeg.probe(video_path)
-    video_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'video']
-    has_audio = any(stream['codec_type'] == 'audio' for stream in probe['streams'])
-    ret['width'] = video_streams[0]['width']
-    ret['height'] = video_streams[0]['height']
-    ret['fps'] = eval(video_streams[0]['avg_frame_rate'])
-    ret['audio'] = ffmpeg.input(video_path).audio if has_audio else None
-    ret['nb_frames'] = int(video_streams[0]['nb_frames'])
+    try:
+        probe = ffmpeg.probe(video_path)
+        video_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'video']
+        has_audio = any(stream['codec_type'] == 'audio' for stream in probe['streams'])
+        ret['width'] = video_streams[0]['width']
+        ret['height'] = video_streams[0]['height']
+        ret['fps'] = eval(video_streams[0]['avg_frame_rate'])
+        ret['audio'] = ffmpeg.input(video_path).audio if has_audio else None
+        
+        # Cố gắng lấy nb_frames, nếu không được thì tính toán
+        try:
+            ret['nb_frames'] = int(video_streams[0]['nb_frames'])
+        except KeyError:
+            # Tính toán nb_frames từ duration và fps
+            duration = float(video_streams[0]['duration'])
+            fps = eval(video_streams[0]['avg_frame_rate'])
+            ret['nb_frames'] = int(duration * fps)
+            
+    except Exception as e:
+        print(f"Lỗi khi đọc thông tin video: {video_path}")
+        print(e)
+        # Trả về giá trị rỗng hoặc raise lỗi nếu không thể đọc video
+        raise IOError(f"Không thể đọc metadata từ video: {video_path}")
+        
     return ret
 
 
