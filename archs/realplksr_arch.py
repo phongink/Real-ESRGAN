@@ -6,7 +6,7 @@ from torch import nn
 from torch.nn.init import trunc_normal_
 
 from .arch_util import DySample, net_opt
-from neosr.utils.registry import ARCH_REGISTRY
+# from neosr.utils.registry import ARCH_REGISTRY
 
 upscale, __ = net_opt()
 
@@ -99,7 +99,7 @@ class PLKBlock(nn.Module):
         return x + x_skip
 
 
-@ARCH_REGISTRY.register()
+# @ARCH_REGISTRY.register()
 class realplksr(nn.Module):
     """Partial Large Kernel CNNs for Efficient Super-Resolution:
     https://arxiv.org/abs/2404.11848
